@@ -1,0 +1,8 @@
+prefix=/home/hzx/motor/install
+
+Name: tcp_twist
+Description: Description of tcp_twist
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

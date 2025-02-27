@@ -1,0 +1,2 @@
+TCP_Twist:move:pubmotor:wheeltec_joy_control
+-DCATKIN_DEVEL_PREFIX=/home/hzx/motor/devel -DCMAKE_INSTALL_PREFIX=/home/hzx/motor/install -G Unix Makefiles
