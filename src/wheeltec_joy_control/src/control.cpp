@@ -46,13 +46,15 @@ wheeltec_joy::wheeltec_joy()
 
 void wheeltec_joy::callback(const sensor_msgs::Joy::ConstPtr& Joy) //键值回调函数
  {
-   double vangle_key,linera_key,synergy_key;
+   double vangle_key,linera_key,synergy_key,start_key;
    double acce_x,acce_z;
    geometry_msgs::Twist v;
    // vangle_key =Joy->axes[axis_ang];  //获取axes[0]的值
    vangle_key =Joy->axes[scale_angular];
    linera_key =Joy->axes[axis_lin];  //获取axes[1]的值
-   synergy_key = Joy->axes[7];
+   synergy_key = Joy->axes[7];// 开启或关闭“协同”模式
+   start_key = Joy->axes[6]; //“一键抬车”启动
+
 
    acce_x=Joy->axes[scale_linear]+1.0;   //读取右摇杆的值对机器人的线速度进行加减速处理
    // acce_z=Joy->axes[scale_angular]+1.0;   //读取右摇杆的值对机器人的角速度进行加减速处理
@@ -81,6 +83,11 @@ void wheeltec_joy::callback(const sensor_msgs::Joy::ConstPtr& Joy) //键值回�
       v.angular.x = -1;
    }else{
       v.angular.x = 0;
+   }
+   if(start_key > 0){
+      v.angular.y = 1;
+   }else{
+      v.angular.y = 0;
    }
    //判断左转右转，大于0为左转，小于0为右转
    if(vangle_key>0)       vlinear_z.data=vangular;

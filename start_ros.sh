@@ -1,54 +1,99 @@
 #!/bin/bash
 
-# wait for reboot
+# 等待系统初始化
 sleep 6
 
-# create a file for recording the log
-LOG_FILE=/home/hzx/motor/log/start_ros_$(date +%Y%m%d_%H%M%S).log
-mkdir -p $(dirname "$LOG_FILE")
+# 日志文件配置
+LOG_FILE="/home/hzx/motor/log/start_ros_$(date +'%Y%m%d_%H%M%S').log"
+mkdir -p "$(dirname "$LOG_FILE")"
 
+# 全局输出重定向（同时显示终端和记录日志）
+exec > >(tee -a "$LOG_FILE") 2>&1
 
+# 初始化ROS环境
+source /opt/ros/melodic/setup.bash
+source /home/hzx/motor/devel/setup.bash
 
-# update the bash
-source /opt/ros/melodic/setup.bash >> $LOG_FILE 2>&1
-source /home/hzx/motor/devel/setup.bash >> $LOG_FILE 2>&1
+# 精确PID获取函数（增加调试输出）
+get_ros_pid() {
+    local pattern="$1"
+    local timeout=5
+    local pid=0
+    
+    echo "DEBUG: 开始查找进程模式: $pattern" >&2
+    for ((i=0; i<timeout*2; i++)); do
+        pid=$(pgrep -f "$pattern" | head -n1)
+        [ -n "$pid" ] && break
+        sleep 0.5
+    done
+    
+    if [ -n "$pid" ] && ps -p $pid > /dev/null; then
+        echo "DEBUG: 找到进程 PID: $pid (模式: $pattern)" >&2
+        echo $pid
+    else
+        echo "DEBUG: 未找到进程 (模式: $pattern)" >&2
+        echo "0"
+    fi
+}
 
-# start the roscore
-echo "Starting roscore..." >> $LOG_FILE
-roscore >> $LOG_FILE 2>&1 &
-ROSCORE_PID=$!
-echo $ROSCORE_PID >> /home/hzx/motor/ros_pids.txt
+# 启动roscore
+echo "[$(date '+%T')] 启动roscore核心..."
+{
+    exec roscore
+} &
+ROSCORE_PID=$(get_ros_pid "roscore")
+[ "$ROSCORE_PID" != "0" ] && echo $ROSCORE_PID > /home/hzx/motor/ros_pids.txt
 
-# wait for roscore
-sleep 3
+# 等待roscore就绪
+until rostopic list >/dev/null 2>&1; do
+    sleep 0.5
+done
+echo "[$(date '+%T')] roscore准备就绪"
 
-# set and start the can
-sudo /sbin/ip link set can0 up type can bitrate 1000000 >> $LOG_FILE 2>&1
-sudo /sbin/ifconfig can0 up >> $LOG_FILE 2>&1
+# 配置CAN接口
+echo "[$(date +"%T")] 初始化CAN接口..."
+sudo ip link set can0 up type can bitrate 1000000 >> $LOG_FILE 2>&1
+sudo ifconfig can0 up >> $LOG_FILE 2>&1
+sleep 0.5
+
+# CAN节点启动
+echo "[$(date '+%T')] 初始化CAN通信..."
+{
+    exec stdbuf -oL roslaunch pubmotor can_motor.launch
+} &
+CAN_PID=$(get_ros_pid "can_motor.launch")
+[ "$CAN_PID" != "0" ] && echo $CAN_PID >> /home/hzx/motor/ros_pids.txt
+
+# 手柄控制节点
 sleep 1
-# start the can2usb
-echo "Starting CAN nodes..." >> $LOG_FILE
-roslaunch pubmotor can_motor.launch >> $LOG_FILE 2>&1 &
-CAN_LAUNCH_PID=$!
-echo $CAN_LAUNCH_PID >> /home/hzx/motor/ros_pids.txt
+echo "[$(date '+%T')] 启动手柄控制..."
+{
+    exec stdbuf -oL roslaunch wheeltec_joy WirelessJoy_crtl_agv.launch
+} &
+JOY_PID=$(get_ros_pid "WirelessJoy_crtl_agv.launch")
+[ "$JOY_PID" != "0" ] && echo $JOY_PID >> /home/hzx/motor/ros_pids.txt
 
-sleep 1
+# 主控节点（C++）
+sleep 0.5
+echo "[$(date '+%T')] 启动主控程序..."
+{
+    exec stdbuf -oL rosrun pubmotor submuti
+} &
+MAIN_PID=$(get_ros_pid "submuti")
+[ "$MAIN_PID" != "0" ] && echo $MAIN_PID >> /home/hzx/motor/ros_pids.txt
 
-# start the Joy control node
-echo "Starting JOY nodes..." >> $LOG_FILE
-roslaunch wheeltec_joy WirelessJoy_crtl_agv.launch >> $LOG_FILE 2>&1 &
-JOY_LAUNCH_PID=$!
-echo $JOY_LAUNCH_PID >> /home/hzx/motor/ros_pids.txt
+# TCP节点（Python）
+sleep 0.5
+echo "[$(date '+%T')] 启动TCP服务..."
+{
+    exec python3 -u /home/hzx/motor/src/TCP_Twist/src/SendSpeed.py
+} &
+TCP_PID=$(get_ros_pid "SendSpeed.py")
+[ "$TCP_PID" != "0" ] && echo $TCP_PID >> /home/hzx/motor/ros_pids.txt
 
-# start the main code
-echo "Starting main node..." >> $LOG_FILE
-rosrun pubmotor submuti >> $LOG_FILE 2>&1 &
-MAIN_NODE_PID=$!
-echo $MAIN_NODE_PID >> /home/hzx/motor/ros_pids.txt
+# 完成提示
+echo "[$(date '+%T')] 系统启动完成 | 记录PID: $ROSCORE_PID,$CAN_PID,$JOY_PID,$MAIN_PID,$TCP_PID"
 
-echo "All nodes started at $(date)" >> $LOG_FILE
-
-# 等待所有后台进程结束
-wait $ROSCORE_PID $CAN_LAUNCH_PID $JOY_LAUNCH_PID $MAIN_NODE_PID
-trap "kill $ROSCORE_PID $CAN_LAUNCH_PID $JOY_LAUNCH_PID $MAIN_NODE_PID; exit" SIGINT SIGTERM
-
+# 信号捕获和清理
+trap "kill -TERM $ROSCORE_PID $CAN_PID $JOY_PID $MAIN_PID $TCP_PID 2>/dev/null; wait" SIGINT SIGTERM
+wait

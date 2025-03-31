@@ -28,7 +28,7 @@ ros/ros.h
 std_msgs/String.h
 /home/hzx/motor/src/pubmotor/src/std_msgs/String.h
 std_msgs/Bool.h
-/home/hzx/motor/src/pubmotor/src/std_msgs/Bool.h
+-
 can_msgs/Frame.h
 -
 serial/serial.h

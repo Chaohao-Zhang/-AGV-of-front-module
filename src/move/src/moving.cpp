@@ -23,6 +23,7 @@
 #define Car_L 300
 #define START 1
 #define STOP 0
+#define Wheel_L_2_R_DIS 0.766
 #define BASE2LIDAR 0.9375 // m
 #define CONTION_START_LINE 1
 #define CONTION_START_CLUSTER 2
@@ -66,7 +67,14 @@ typedef enum ROBOT_STATE_ITEMS
 	PLAN_STARIGHT,//19
 	STARIGHT_PASS, //20
 
-	STOPPING,//21
+	PLAN_STARIGHT_READY, //21
+	STARIGHT_PASS1, //22
+	REAR_TOUCH_WHEEL, // 23
+	STARIGHT_PASS2, //24
+
+	TAKING_UP_THE_CAR, //25
+
+	STOPPING,//26
 }ROBOT_STATE_ITEMS;
 typedef enum DETECT_WHEEL_STATE_ITEMS{
 	NO_CAR_POINT,
@@ -210,16 +218,16 @@ TRCK_PIONTS Car_location[10] =
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.05f},
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.05f},
 };
-TRCK_PIONTS Pass_location[8] = 
+TRCK_PIONTS Pass_location[5] = 
 {
+// {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
-{0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
+// {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.05f},
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.05f},
-{0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.05f},
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
 {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
-{0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
+// {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
 // {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
 // {0.0, 0.0, 0.0f, -90.0f, 0.0f, 0.02f},
 };
@@ -272,11 +280,11 @@ typedef enum STRAIGHT_STATE_ITEMS{
 	MOVING,
 	STOPING,
 }STRAIGHT_STATE_ITEMS;
-typedef enum ASSIST_ARM_STATE_ITEMS{
+typedef enum ARM_STATE_ITEMS{
 	OPEN,
 	CLOSE,
 	NOT,
-}ASSIST_ARM_STATE_ITEMS;
+}ARM_STATE_ITEMS;
 
 /*四元素解算参数*/
 struct Quaternion {
@@ -323,8 +331,13 @@ ROBOT_MOVE	MOVING_STATE = MOVE_STOP;
 DETECT_WHEEL_STATE_ITEMS DETECTING_STATE = NO_CAR_POINT;
 PLANNING_STATE PLAN_STATE = NO_PALNNING;
 IO_STATE_ITEMS Ser_IO_STATE = WRITE_IO;
+IO_STATE_ITEMS REAR_IO_STATE = WRITE_IO;
 STRAIGHT_STATE_ITEMS PASS_WHEEL = MOVING;
-ASSIST_ARM_STATE_ITEMS ASSIST_ARM_STATE = NOT;
+STRAIGHT_STATE_ITEMS REAR_PASS_WHEEL = MOVING;
+ARM_STATE_ITEMS ASSIST_ARM_STATE = NOT;
+ARM_STATE_ITEMS REAR_ASSIST_ARM_STATE = NOT;
+ARM_STATE_ITEMS PRIME_ARM_STATE = NOT;
+ARM_STATE_ITEMS REAR_PRIME_ARM_STATE = NOT;
 PATH_FOLLOW    Path_Contorl = {0,1};
 uint32_t PATH_POINT_NUM = 0;
 float ROBOT_REAL_X,ROBOT_REAL_Y = 500;
@@ -335,7 +348,11 @@ float straight_start = 0;
 double car_angle, face_car_angle = 0;
 uint8_t get_start = STOP;
 ros::Publisher IO_state_sub;
+ros::Publisher pub_syn_ctrl;
 move::detect_state Dect_state;
+bool Is_synergy = false;
+bool Is_SemiSyn = false; // Using in the synergy's model,true:only fronts moves,false:together move
+bool Is_PRIME_ARM_ARRIVED = false;
 
 bool SEND_flag = NOT_SEND;
 int CTRL_FLAG = CONTION_WAIT;
@@ -685,7 +702,8 @@ void robot_vel::Cal_VEL(void){
 	float W_x,W_y = 0;
 	double diff = 0;
 	geometry_msgs::Twist robot_v;
-	if(MOVING_STATE == MOVE_GOING){
+	geometry_msgs::Twist synergy_V;
+	if(MOVING_STATE == MOVE_GOING && World_VY != 0 && World_VX !=0){
 		SEND_VEL = 1;
 		cout<<"GOING!!"<<endl;
 		// W_y = World_VW * Car_L; //角速度解算到车轮的线速度
@@ -709,10 +727,6 @@ void robot_vel::Cal_VEL(void){
 		wheel_w = -PID_Position_Calculate(&YAW_PID, 0, diff);
 		// cout<<"World YAW SPEED :"<<World_VW<<endl;
 	}else if(MOVING_STATE != MOVE_GOING && TURN_STATE != TURNNING){
-		if(senconds > 2){
-			SEND_VEL = 0;
-		}
-		senconds++;
 		wheel_vel = 0;
 		wheel_w = 0;
 	}
@@ -722,7 +736,7 @@ void robot_vel::Cal_VEL(void){
 		wheel_w = World_VW;
 	}
 	
-	if(ROBOT_STATE == STARIGHT_PASS && MOVING_STATE == MOVE_GOING)
+	if((ROBOT_STATE == STARIGHT_PASS || ROBOT_STATE == STARIGHT_PASS1 || ROBOT_STATE == STARIGHT_PASS2) && MOVING_STATE == MOVE_GOING)
 	{
 		wheel_vel = 0.1f;
 		wheel_w = 0.0;
@@ -739,8 +753,80 @@ void robot_vel::Cal_VEL(void){
 	}else{
 		robot_v.linear.y = 0.0;
 	}
+	if(PRIME_ARM_STATE == OPEN){
+		robot_v.linear.z = -1.0;
+	}else if(PRIME_ARM_STATE == CLOSE){
+		robot_v.linear.z = 1.0;
+	}else{
+		robot_v.linear.z = 0.0;
+	}
+	if(MOVING_STATE == MOVE_STOP){
+		SEND_VEL = 0;
+	}
+
+
+	/*Sending the speed to driver*/
 	if (SEND_VEL){
-		printf("World liner SPEED : %.4f, World YAW SPEED : %.4f\r\n",wheel_vel,wheel_w);
+
+		/*if the model of synergy is open, Sending the contorl for rear module*/
+		if(Is_synergy){
+			/*
+			linear:
+				x:liner_vel,
+				y:assistant arm
+				z:prime arm
+			angular:
+				x:the radius of turning
+				y:IO's model
+				z:yaw's speed
+			*/
+			float turning_w = 0, turning_R = 0, liner_vel = 0, vel_yaw = 0;
+			/*sending for rear module speed on moving*/
+			if(!Is_SemiSyn){
+				float turning_w = 0, turning_R = 0;
+				liner_vel = robot_v.linear.x;
+				vel_yaw = robot_v.angular.z;
+				/*calculate the radius of turning*/
+				turning_w = ((liner_vel+vel_yaw) - (liner_vel-vel_yaw)) / Wheel_L_2_R_DIS;
+				turning_R = ((liner_vel+vel_yaw) + (liner_vel-vel_yaw)) /2 /turning_w;
+			}else{
+				liner_vel = 0.0f;
+				turning_R = 0.0f;
+				turning_w = 0.0f;
+			}
+			synergy_V.linear.x = liner_vel;
+			synergy_V.angular.z = turning_w;
+			synergy_V.angular.x = turning_R;
+			
+			/*control the rear assistant arm*/
+			if(REAR_ASSIST_ARM_STATE == OPEN){
+				synergy_V.linear.y = 1.0;
+			}else if(REAR_ASSIST_ARM_STATE == CLOSE){
+				synergy_V.linear.y = -1.0;
+			}else{
+				synergy_V.linear.y = 0.0;
+			}
+			/*control the rear prime arm*/
+			if(REAR_PRIME_ARM_STATE == OPEN){
+				synergy_V.linear.z = 1.0;
+			}else if(REAR_PRIME_ARM_STATE == CLOSE){
+				synergy_V.linear.z = -1.0;
+			}else{
+				synergy_V.linear.z = 0.0;
+			}
+
+			/*Sending IO's model*/
+			if(REAR_IO_STATE == READ_IO){
+				synergy_V.angular.y = 1;
+			}else{
+				synergy_V.angular.y = 0;
+			}
+
+			pub_syn_ctrl.publish(synergy_V);
+		}
+
+		/*Sending the speed to driver*/
+		ROS_INFO("liner SPEED : %.2f, YAW SPEED : %.2f, VICE_ARM SPEED : %.2f, PRIME_ARM SPEED : %.2f",wheel_vel,wheel_w, robot_v.linear.y, robot_v.linear.z);
 		pub.publish(robot_v);
 	}
 }
@@ -855,6 +941,10 @@ void Moving_FSM (void){
 		// 		MOVING_STATE = MOVE_STOP;
 		// 	}
 		// 	break;
+
+		/*
+		dectecting car postion for moving to the front of car
+		*/
 		case DETECTING_WHEEL:
 			if(DETECTING_STATE == GET_CAR_POINT){
 				DETECTING_STATE = NO_CAR_POINT;
@@ -890,7 +980,9 @@ void Moving_FSM (void){
 			}
 			break;
 
-		
+		/*
+		the second time of detecting the car ,for starightly pass the car
+		*/
 		case DETECTING_WHEEL_PASS:
 			IS_REC = 1;
 			if(DETECTING_STATE == GET_CAR_POINT){
@@ -901,8 +993,10 @@ void Moving_FSM (void){
 				TURN_STATE = NO_TURNNING;
 			}else if(DETECTING_STATE == ARRIVIALED_CAR){
 				IS_REC = 0;
-				ROBOT_STATE = PLAN_STARIGHT;
-				MOVING_STATE = MOVE_STOP;
+				ROBOT_STATE = PLAN_STARIGHT; // PLAN_STARIGHT: single front's, PLAN_STARIGHT_READY: couple car
+				MOVING_STATE = MOVE_ARRIVE;
+				TURN_STATE = NO_TURNNING;
+				
 			}
 			break;
 		case CLOSING_TO_CAR:
@@ -916,28 +1010,102 @@ void Moving_FSM (void){
 			// TURN_STATE = TURNNED;
 			if(TURN_STATE == TURNNED){
 				ROBOT_STATE = DETECTING_WHEEL_PASS;
-				MOVING_STATE = MOVE_STOP;
+				MOVING_STATE = MOVE_ARRIVE;
+			}
+			break;
+		/* Has been closed the car,the agv can starightly pass through the car*/
+		/*Judging by the patterns used*/
+		if(!Is_synergy){
+			/* the singal car status (only the front module)*/
+			case PLAN_STARIGHT:
+			{
 				ASSIST_ARM_STATE = OPEN;
+				detecting_oout++;
+				if(PLAN_STATE == PLANNED){
+					ROS_INFO("the agv has been planned the road,now starting to pass the car");
+					ROBOT_STATE = STARIGHT_PASS;
+					MOVING_STATE = MOVE_GOING;
+					Ser_IO_STATE = READ_IO;
+				}
+			}
+				break;
+			case STARIGHT_PASS:{
+				if(PASS_WHEEL == STOPING){
+					ROS_INFO("the agv has been touched the wheel of car!!!");
+					// PASS_WHEEL = MOVING;
+					ROBOT_STATE = STOPPING;
+					MOVING_STATE = MOVE_STOP;
+					Ser_IO_STATE = WRITE_IO;
+				}
+			}
+				break;
+		}else{
+			/*the couple status(the connected with front and rear)*/
+			case PLAN_STARIGHT_READY:
+			{
+				REAR_ASSIST_ARM_STATE = OPEN;
+				REAR_IO_STATE = WRITE_IO;
+				detecting_oout++;
+				if(PLAN_STATE == PLANNED){
+					ROS_INFO("the agv has been planned the road,now starting to pass the car");
+					ROBOT_STATE = STARIGHT_PASS1;
+					MOVING_STATE = MOVE_GOING;
+					REAR_IO_STATE = READ_IO;
+					REAR_ASSIST_ARM_STATE = NOT;
+					detecting_oout = 0;
+				}
+			}
+				break;
+			case STARIGHT_PASS1:
+			{
+				ROS_INFO("the REAR PASS WHEEL's state:%s",REAR_PASS_WHEEL?"STOPING":"MOVING");
+				if(REAR_PASS_WHEEL == STOPING){
+					ROS_INFO("the rear module has been touched the wheel of car!!!");
+					ROBOT_STATE = REAR_TOUCH_WHEEL;
+					MOVING_STATE = MOVE_ARRIVE;
+					detecting_oout = 0;
+				}
+			}
+				break;
+			case REAR_TOUCH_WHEEL:
+			{
+				Is_SemiSyn = true;
+				ASSIST_ARM_STATE = OPEN;
+				REAR_IO_STATE = WRITE_IO;
+				REAR_PRIME_ARM_STATE = OPEN;
+				detecting_oout++;
+				if(detecting_oout >= 80){
+					MOVING_STATE = MOVE_GOING;
+					Ser_IO_STATE = READ_IO;
+					ROBOT_STATE = STARIGHT_PASS2;
+				}
+			}
+				break;
+			case STARIGHT_PASS2:
+			{
+				ROS_INFO("the PASS WHEEL's state:%s",PASS_WHEEL?"STOPING":"MOVING");
+				if(PASS_WHEEL == STOPING){
+					ROS_INFO("the agv has been touched the wheel of car!!!");
+					ASSIST_ARM_STATE = NOT;
+					Ser_IO_STATE = WRITE_IO;
+					ROBOT_STATE = TAKING_UP_THE_CAR;
+					MOVING_STATE = MOVE_ARRIVE;
+					PRIME_ARM_STATE = OPEN;
+				}
+			}
+				break;
+			case TAKING_UP_THE_CAR:
+			{
+				if(Is_PRIME_ARM_ARRIVED){
+					ROBOT_STATE = STOPPING;
+					MOVING_STATE = MOVE_STOP;
+					PRIME_ARM_STATE = NOT;
+					REAR_PRIME_ARM_STATE = NOT;
+					Is_SemiSyn = false;
+				}
 			}
 			break;
-		case PLAN_STARIGHT:
-		{
-			detecting_oout++;
-			if(PLAN_STATE == PLANNED){
-				ROBOT_STATE = STARIGHT_PASS;
-				MOVING_STATE = MOVE_GOING;
-				Ser_IO_STATE = READ_IO;
-			}
 		}
-			break;
-		case STARIGHT_PASS:
-			if(PASS_WHEEL == STOPING){
-				PASS_WHEEL = MOVING;
-				ROBOT_STATE = STOPPING;
-				MOVING_STATE = MOVE_STOP;
-				Ser_IO_STATE = WRITE_IO;
-			}
-			break;
 		default:
 			break;
 	}
@@ -1006,24 +1174,24 @@ void Moving (void)
 		break;
 		case STARIGHT_PASS:
 		{
-			if(ROBOT_REAL_Y - straight_start > 1000){
-				MOVING_STATE = MOVE_ARRIVE;
-				ROS_INFO("The straight ending location is:%f", ROBOT_REAL_Y);
-				return;
-			}else{
-				return;
-			}
+			// if(ROBOT_REAL_Y - straight_start > 1000){
+			// 	MOVING_STATE = MOVE_ARRIVE;
+			// 	ROS_INFO("The straight ending location is:%f", ROBOT_REAL_Y);
+			// 	return;
+			// }else{
+			// 	return;
+			// }
 		}
+		break;
 					
 		default:
 		{
 			NOW_PATH = NULL;
+			return;
 		}
 		break;
 		}
-		PATH_TRACKING(NOW_PATH, PATH_POINT_NUM);
-
-					
+		PATH_TRACKING(NOW_PATH, PATH_POINT_NUM);		
 	}
 
 }
@@ -1290,7 +1458,7 @@ void RecPassPointCallback(const geometry_msgs::Point::ConstPtr& car_position){
 				calculate_control_points(start, end, 0.4, p1, p2);
 
 				// 生成轨迹
-				int num_points = 8;
+				int num_points = 5;
 				std::vector<std::tuple<double, double, double>> path;
 				
 				for (int i = 0; i < num_points; ++i) {
@@ -1334,6 +1502,60 @@ void ArmTouchCallback(const std_msgs::Bool::ConstPtr& msg){
 		PASS_WHEEL = MOVING;
 	}
 }
+void RearArmTouchCallback(const std_msgs::Bool::ConstPtr& msg){
+	if(msg->data == TOUCH){
+		ROS_INFO("The REAR_ROBOT has been touched the car!!!");
+		REAR_PASS_WHEEL = STOPING;
+	}else if(msg->data == NOT_TOUCH){
+		ROS_INFO("The REAR_ROBOT has not been touched the car,countiuing close!!!");
+		REAR_PASS_WHEEL = MOVING;
+	}
+}
+
+void StartCallback(const std_msgs::Bool::ConstPtr& msg){
+	if(msg->data == true){
+		ROS_INFO("Has been recived the commend of One_Key_Start!!!");
+		/*for testing the lidar's function */
+		// get_start = START;
+		// ROBOT_STATE = DETECTING_WHEEL;
+		// CTRL_FLAG = CONTION_START_LINE;
+		// SEND_flag = SEND;
+		// IS_REC = 1;
+
+		/*for testing the One_Key_Start*/
+		get_start = START;
+		Is_synergy = true;
+		ROBOT_STATE = PLAN_STARIGHT_READY;
+		// ROBOT_STATE = REAR_TOUCH_WHEEL;
+		MOVING_STATE = MOVE_ARRIVE;
+		detecting_oout = 0;
+		PLAN_STATE = NO_PALNNING;
+		REAR_PASS_WHEEL = MOVING;
+		CTRL_FLAG = CONTION_WAIT;
+		SEND_flag = NOT_SEND;
+		REAR_PRIME_ARM_STATE = NOT;
+		PASS_WHEEL = MOVING;
+		Is_PRIME_ARM_ARRIVED = false;
+		IS_REC = 0;
+	}
+}
+
+void SynergyCallback(const std_msgs::Bool::ConstPtr& msg){
+	if(msg->data == true){
+		ROS_INFO("Has been recived the commend of STARTING Synergy!!!");
+		Is_synergy = true;
+	}else if(msg->data == false){
+		ROS_INFO("Has been recived the commend of CLOSEING Synergy!!!");
+		Is_synergy = false;
+	}
+}
+
+void PrimeArmeOpenCallback(const std_msgs::Bool::ConstPtr& msg){
+	if(msg->data == true){
+		ROS_INFO("The Front_ROBOT has been open the Prime_ARM!!!");
+		Is_PRIME_ARM_ARRIVED = true;
+	}
+}
 // void Dect_state_send(void){
 // 	DectState_sub.publish(Dect_state);
 // 	ROS_INFO("SENDING THE dectection's state !!!");
@@ -1349,11 +1571,20 @@ int main(int argc, char **argv)
 	ros::Subscriber carPoint_sub;
 	ros::Subscriber passPoint_sub;
 	ros::Subscriber arm_touch_wheel_sub;
+	ros::Subscriber rear_arm_touch_wheel_sub;
+	ros::Subscriber prime_arm_opened_sub;
+	ros::Subscriber start_sub;
+	ros::Subscriber synergy_sub;
 	IO_state_sub = nh.advertise<std_msgs::Bool>("Ser_IO_state", 1);
+	pub_syn_ctrl = nh.advertise<geometry_msgs::Twist>("synergy_vel",1);;
 	sub = nh.subscribe<nav_msgs::Odometry>("Odometry", 100, &AgvPositionCallback);
 	carPoint_sub = nh.subscribe<geometry_msgs::Point>("move_carPoint", 10, &RecCarPointCallback);
 	passPoint_sub = nh.subscribe<geometry_msgs::Point>("move_passPoint", 10, &RecPassPointCallback);
-	arm_touch_wheel_sub = nh.subscribe<std_msgs::Bool>("arm_touch_wheel", 10, &ArmTouchCallback);
+	arm_touch_wheel_sub = nh.subscribe<std_msgs::Bool>("arm_touch_wheel", 1, &ArmTouchCallback);
+	rear_arm_touch_wheel_sub = nh.subscribe<std_msgs::Bool>("rear_arm_touch_wheel", 1, &RearArmTouchCallback);
+	prime_arm_opened_sub = nh.subscribe<std_msgs::Bool>("Prime_ARM_OPENED", 5, &PrimeArmeOpenCallback);
+	start_sub = nh.subscribe<std_msgs::Bool>("Is_start", 10, &StartCallback);
+	synergy_sub = nh.subscribe<std_msgs::Bool>("Is_synergy", 10, &SynergyCallback);
 	robot_vel robot_v;
 
 	PID_Parameter_Speed_Init(&TRACK_PID,0.0007,0, 0, 1, 0, 0, 1 );
@@ -1374,7 +1605,7 @@ int main(int argc, char **argv)
 			cout<<"ROBOT STATE:"<<ROBOT_STATE<<endl;
 			cout<<"TURN STATE:"<<TURN_STATE<<endl;
 		}
-		if(ROBOT_STATE == PLAN_STARIGHT && detecting_oout > 30){
+		if(ROBOT_STATE == PLAN_STARIGHT_READY && detecting_oout > 120){
 			PLAN_STATE = PLANNED;
 			straight_start = ROBOT_REAL_Y;
 			ROS_INFO("The straight starting location is:%f", straight_start);
@@ -1390,16 +1621,14 @@ int main(int argc, char **argv)
 			cout<<"TURN STATE:"<<TURN_STATE<<endl;
 			// cout<<"TASK starting!!!"<<endl;
 
-			get_start = START;
+			// get_start = START;
 			// ROBOT_STATE = DETECTING_WHEEL;
 			// CTRL_FLAG = CONTION_START_LINE;
 			// SEND_flag = SEND;
 			// IS_REC = 1;
 
-			ROBOT_STATE = PLAN_STARIGHT;
-
 			// ROBOT_STATE = PLAN_STARIGHT;
-			
+
 			// Dect_state.detect_state = false;
 			/*以下两行为测试偏航PID的测试*/
 			// ROBOT_STATE = TURNNING_CIRA1;
