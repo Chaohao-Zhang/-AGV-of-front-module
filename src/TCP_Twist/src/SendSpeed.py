@@ -167,7 +167,7 @@ class TCPConnector:
                              msg.angular.y)   # IO状态
             
             self.sock.sendall(data)
-            rospy.loginfo("已发送 | X:%.2f YAW:%.2f R:%.2f 副臂:%.2f 主臂:%.2f IO:%d",
+            rospy.loginfo("已发送 | X:%.2f YAW:%.4f R:%.2f 副臂:%.2f 主臂:%.2f IO:%d",
                         msg.linear.x,
                         msg.angular.z,
                         msg.angular.x,

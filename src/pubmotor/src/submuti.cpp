@@ -23,7 +23,7 @@
 #define OPEN_ARRIVALED 1
 #define PI 3.14159
 #define MOVING 0
-#define Wheel_2_C_DIS 0.37
+#define Wheel_2_C_DIS 0.388
 #define READ_IO false
 #define WRITE_IO true
 #define NOT_TOUCH false
@@ -46,6 +46,7 @@ vector<unsigned char>  ser_RIO_shell = {0x01, 0x02, 0x00, 0x00, 0x00, 0x08, 0x79
 uint8_t Left_Is_Arrival = 0;
 uint8_t Right_Is_Arrival = 0;
 bool is_touch = NOT_TOUCH;
+bool is_touch_rear = NOT_TOUCH;
 bool is_synergy = false;
 IO_STATE_ITEMS IO_STATE = WRITE;
 serial::Serial ser;
@@ -93,12 +94,15 @@ public:
     can1 = n.subscribe("received_messages", 1, &multiThreadListener::chatterCallback3,this);
     sub_agv_vel = n.subscribe("agv_vel", 1, &multiThreadListener::AgvVelotryCallback, this);
     sub_agv_nav_vel = n.subscribe("cmd_vel", 1, &multiThreadListener::NavVelotryCallback, this);
-    io_state = n.subscribe("Ser_IO_state", 1, &multiThreadListener::SerIOCallback, this);
+   //  io_state = n.subscribe("Ser_IO_state", 1, &multiThreadListener::SerIOCallback, this);
    //  sub_agv_posiiton = n.subscribe("Odometry", 1, &multiThreadListener::AgvPositionCallback, this);
     pubcan = n.advertise<can_msgs::Frame>("sent_messages", 100);
     arm_wheel_can = n.advertise<std_msgs::Bool>("arm_touch_wheel", 1);
+    pub_close_rear = n.advertise<std_msgs::Bool>("front_touch_rear", 1);
     pub_start = n.advertise<std_msgs::Bool>("Is_start", 5);
+    pub_down = n.advertise<std_msgs::Bool>("Is_Down", 5);
     pub_arm_arrived = n.advertise<std_msgs::Bool>("Prime_ARM_OPENED", 5);
+    pub_arm_closed = n.advertise<std_msgs::Bool>("Prime_ARM_CLOSED", 5);
     pub_syn = n.advertise<geometry_msgs::Twist>("synergy_vel",5);
     pub_synergy = n.advertise<geometry_msgs::Twist>("Is_synergy",5);
 	}
@@ -111,6 +115,7 @@ public:
   // void publish_data(string id, float velocity,float acceleration);
   void publish_can(vector<unsigned char>& data, uint8_t Len);
   void publish_arm_wheel(bool state);
+  void publish_close_rear(bool state);
 
   void CAN_msg_classify(const unsigned char  *data, uint32_t motor_id, uint8_t Len);
   vector<unsigned char >send_data={0x12,0x34,0x00,0x00,0x00,0x00,0x00,0x56};
@@ -146,9 +151,12 @@ private:
 //   ros::Publisher pub;
   ros::Publisher pubcan;
   ros::Publisher arm_wheel_can;
+  ros::Publisher pub_close_rear;
   ros::Publisher pub_arm_arrived;
+  ros::Publisher pub_arm_closed;
   ros::Publisher pub_syn;
   ros::Publisher pub_start;
+  ros::Publisher pub_down;
   ros::Publisher pub_synergy;
 };
 
@@ -435,6 +443,8 @@ void multiThreadListener:: publish_can( vector<unsigned char>& data, uint8_t Len
    pubcan.publish( can_frame_msg);
 };
 
+bool Left_Shake = false;
+bool Right_Shake = false;
 void multiThreadListener::AgvVelotryCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
    static uint8_t Assistant_ARM  = CLOSED;
@@ -460,6 +470,11 @@ void multiThreadListener::AgvVelotryCallback(const geometry_msgs::Twist::ConstPt
       start_commend.data = true;
       is_synergy = true;
       pub_start.publish(start_commend);
+   }else if(start_key == -1){
+      std_msgs::Bool down_commend;
+      down_commend.data = true;
+      is_synergy = true;
+      pub_start.publish(down_commend);
    }
 
    if(msg->angular.x>0){
@@ -522,11 +537,21 @@ void multiThreadListener::AgvVelotryCallback(const geometry_msgs::Twist::ConstPt
    motor2_speed = (right_speed)/(2*PI*0.06)*16*10000;
    // motor2_speed = motor2_speed*-1;
    if(motor1_speed == 0 && abs(testMotor_info[slave_id1-1].Actual_Val) <= 1000){
+      Left_Shake = true;
+   }else if(motor1_speed != 0){
+      Left_Shake = false;
+   }
+   if(motor2_speed == 0 && abs(testMotor_info[slave_id2-1].Actual_Val) <= 1000){
+      Right_Shake = true;
+   }else if(motor2_speed != 0){
+      Right_Shake = false;
+   }
+   if(Left_Shake){
       shell_data1[0] = 0x07;
    }else{
       shell_data1[0] = 0x0f;
    }
-   if(motor2_speed == 0 && abs(testMotor_info[slave_id2-1].Actual_Val) <= 1000){
+   if(Right_Shake){
       shell_data2[0] = 0x07;
    }else{
       shell_data2[0] = 0x0f;
@@ -659,12 +684,32 @@ void multiThreadListener::NavVelotryCallback(const geometry_msgs::Twist::ConstPt
    motor2_speed = (vel_x*-1+vel_yaw)/(2*PI*0.06)*16*10000;
    motor2_speed = motor2_speed*-1;
    ROS_INFO("the moto1 actual speed:%f, the moto2 actual speed:%f",testMotor_info[slave_id1-1].Actual_Val, testMotor_info[slave_id2-1].Actual_Val);
+   // if(motor1_speed == 0 && abs(testMotor_info[slave_id1-1].Actual_Val) <= 1000){
+   //    shell_data1[0] = 0x07;
+   // }else{
+   //    shell_data1[0] = 0x0f;
+   // }
+   // if(motor2_speed == 0 && abs(testMotor_info[slave_id2-1].Actual_Val) <= 1000){
+   //    shell_data2[0] = 0x07;
+   // }else{
+   //    shell_data2[0] = 0x0f;
+   // }
    if(motor1_speed == 0 && abs(testMotor_info[slave_id1-1].Actual_Val) <= 1000){
+      Left_Shake = true;
+   }else if(motor1_speed != 0){
+      Left_Shake = false;
+   }
+   if(motor2_speed == 0 && abs(testMotor_info[slave_id2-1].Actual_Val) <= 1000){
+      Right_Shake = true;
+   }else if(motor2_speed != 0){
+      Right_Shake = false;
+   }
+   if(Left_Shake){
       shell_data1[0] = 0x07;
    }else{
       shell_data1[0] = 0x0f;
    }
-   if(motor2_speed == 0 && abs(testMotor_info[slave_id2-1].Actual_Val) <= 1000){
+   if(Right_Shake){
       shell_data2[0] = 0x07;
    }else{
       shell_data2[0] = 0x0f;
@@ -703,8 +748,15 @@ void multiThreadListener::NavVelotryCallback(const geometry_msgs::Twist::ConstPt
       else{
          shell_data3[0] = 0x0f;
       }
-      motor3_speed = vel_pole*200000;
-      motor4_speed = vel_pole*200000;
+      if((Left_Is_Arrival == CLOSE_ARRIVALED ) && (Right_Is_Arrival == CLOSE_ARRIVALED)){
+         ROS_INFO("the PRIME_ARM have been open opened!!!");
+         std_msgs::Bool prime_arm_closed;
+         prime_arm_closed.data = true;
+         pub_arm_closed.publish(prime_arm_closed);
+      }
+
+      motor3_speed = vel_pole*300000;
+      motor4_speed = vel_pole*300000;
       if(testMotor_info[2].Actual_Pos >= -50000){
          motor3_speed *= 0.2;
       }
@@ -738,8 +790,8 @@ void multiThreadListener::NavVelotryCallback(const geometry_msgs::Twist::ConstPt
          prime_arm_opened.data = true;
          pub_arm_arrived.publish(prime_arm_opened);
       }
-      motor3_speed = vel_pole*200000;
-      motor4_speed = vel_pole*200000;
+      motor3_speed = vel_pole*300000;
+      motor4_speed = vel_pole*300000;
       if(testMotor_info[2].Actual_Pos <= -4950000){
          motor3_speed *= 0.2;
       }
@@ -825,6 +877,16 @@ void multiThreadListener::publish_arm_wheel(bool state){
    }
    arm_wheel_can.publish(data);
 }
+void multiThreadListener::publish_close_rear(bool state){
+   std_msgs::Bool data;
+   ROS_INFO(" the FRONT CLOSE REAR publish the info:%s", state?"TOUCH":"NOT_TOUCH");
+   if(state == TOUCH){
+      data.data = TOUCH;
+   }else if(state == NOT_TOUCH){
+      data.data = NOT_TOUCH;
+   }
+   pub_close_rear.publish(data);
+}
 
 
 void sigintHandler(int sig){
@@ -836,22 +898,43 @@ void sigintHandler(int sig){
 
 uint8_t serial_send(void){
    uint8_t Len = 0;
-   if(IO_STATE == WRITE){
-      is_touch = NOT_TOUCH;
+   static uint8_t io_state = 0;
+   io_state++;
+   if(io_state == 1){
+      // is_touch = NOT_TOUCH;//在话题控制io模块读写，需要开启，进行标志位清零
+      IO_STATE = WRITE;
       Len = ser_shell.size();
       for(uint8_t i =0; i < Len; i++){
          s_buffer[i] = ser_shell[i];
          // printf("%02x",s_buffer[i]);
       }
       // printf("\r\n");
-   }else if(IO_STATE == READ){
+   }else if(io_state == 2){
       Len = ser_RIO_shell.size();
+      IO_STATE = READ;
       for(uint8_t i =0; i < Len; i++){
          s_buffer[i] = ser_RIO_shell[i];
          // printf("%02x",s_buffer[i]);
       }
+      io_state = 0;
       // printf("\r\n");
    }
+   // if(IO_STATE == WRITE){
+   //    is_touch = NOT_TOUCH;
+   //    Len = ser_shell.size();
+   //    for(uint8_t i =0; i < Len; i++){
+   //       s_buffer[i] = ser_shell[i];
+   //       // printf("%02x",s_buffer[i]);
+   //    }
+   //    // printf("\r\n");
+   // }else if(IO_STATE == READ){
+   //    Len = ser_RIO_shell.size();
+   //    for(uint8_t i =0; i < Len; i++){
+   //       s_buffer[i] = ser_RIO_shell[i];
+   //       // printf("%02x",s_buffer[i]);
+   //    }
+   //    // printf("\r\n");
+   // }
    
    return Len;
 }
@@ -973,11 +1056,17 @@ void readSerialData()
             {
                is_touch = TOUCH;
                ROS_INFO("CLOSED to the CAR!!!");
-            }
-            else 
-            {
+            }else {
                is_touch = NOT_TOUCH;
                ROS_INFO("NOT CLOSED to the CAR!!!");
+            }
+            if ((r_buffer[3] & 0x0C) == 0x0C) 
+            {
+               is_touch_rear = TOUCH;
+               ROS_INFO("TOUCHING to the REAR!!!");
+            }else {
+               is_touch_rear = NOT_TOUCH;
+               ROS_INFO("NOT TOUCH to the REAR!!!");
             }
          }
       }
@@ -1061,6 +1150,7 @@ int main(int argc, char **argv)
 
       if( IO_STATE == READ){
          ur_msg.publish_arm_wheel(is_touch);
+         ur_msg.publish_close_rear(is_touch_rear);
       }
 
       rate.sleep(); // Sleep for the duration of the rate
