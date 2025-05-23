@@ -163,12 +163,12 @@ TRCK_PIONTS GOTO_PATH2_UPCAR[15] =
 	{-7000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
 	{-8500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
 	{-10000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
-	{-12000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
-	{-13000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-	{-13500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{-13900.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-11000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
+	{-12000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
+	{-12500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-12900.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
 };
-TRCK_PIONTS GOTO_PATH2[12] = 
+TRCK_PIONTS GOTO_PATH2[11] = 
 {
 // {0.0, 6000.0, 0.0f, 90.0f, 0.0f, 0.2*Speed_Max},
 // {600.0, 5000.0, 0.0f, 90.0f, 0.0f, 0.5f*0.5f*Speed_Max},
@@ -191,41 +191,40 @@ TRCK_PIONTS GOTO_PATH2[12] =
 {-7000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
 {-8500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
 {-10000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
-{-11000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
+{-12000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
 {-13000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*Speed_Max},
-{-14000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
-{-14500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
-{-14900.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
+{-13500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
+{-13900.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
 };
 /*进入车辆停放区域*/
-TRCK_PIONTS GOTO_PATH3_UPCAR[6] = 
-{
-{-18000.0, 3000.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-{-18000.0, 2500.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-{-18000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-{-18000.0, -1000.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-{-18000.0, -1500.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-{-18000.0, -2000.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-};
 TRCK_PIONTS GOTO_PATH3[6] = 
 {
-{-18000.0, 4000.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
-{-18000.0, 3000.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
-{-18000.0, 2000.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
-{-18000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
-{-18000.0, 500.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
-{-18000.0, 0.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
+{-17000.0, 3000.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+{-17000.0, 2500.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+{-17000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
+{-17000.0, -1000.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
+{-17000.0, -1500.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+{-17000.0, -2000.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+// {7000.0, 2000.0, 0.0f, 179.0f, 0.0f, 1.0f*Speed_Max},
+// {7000.0, 3500.0, 0.0f, 179.0f, 0.0f, 1.0f*Speed_Max},
+// {7000.0, 3000.0, 0.0f, 179.0f, 0.0f, 1.0f*Speed_Max},
+// {7000.0, 2700.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
+// {7000.0, 2300.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
+// {7000.0, 2000.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
+// {7000.0, 500.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
+// /*代码测试为了方便进行的修改，实机测试需要删掉*/
+// {5000.0, 0.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
+// {5000.0, 0.0, 0.0f, 179.0f, 0.0f, 1.0f*Speed_Max},
 };
-
 /*离开车辆停放区域*/
 TRCK_PIONTS GOTO_PATH4_UPCAR[6] = 
 {
-	{-18000.0, 0.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{-18000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{-18000.0, 1500.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-	{-18000.0, 2000.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-	{-18000.0, 2500.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{-18000.0, 2900.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-17000.0, 0.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-17000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-17000.0, 1500.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
+	{-17000.0, 2000.0, 0.0f, 179.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
+	{-17000.0, 2500.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-17000.0, 2900.0, 0.0f, 179.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
 // {2000.0, 0.0, 0.0f, -90.0f, 0.0f, 1.0f*Speed_Max},
 // {1000.0, 0.0, 0.0f, -90.0f, 0.0f, 0.5f*Speed_Max},
 // {500.0, 0.0, 0.0f, -90.0f, 0.0f, 0.2f*Speed_Max},
@@ -234,11 +233,11 @@ TRCK_PIONTS GOTO_PATH4_UPCAR[6] =
 };
 TRCK_PIONTS GOTO_PATH4[5] = 
 {
-{-18000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
-{-18000.0, 1500.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
-{-18000.0, 3000.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
-{-18000.0, 3500.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
-{-18000.0, 3900.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
+{-17000.0, 1000.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
+{-17000.0, 1500.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
+{-17000.0, 3000.0, 0.0f, 179.0f, 0.0f, 0.5f*Speed_Max},
+{-17000.0, 3500.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
+{-17000.0, 3900.0, 0.0f, 179.0f, 0.0f, 0.2f*Speed_Max},
 // {2000.0, 0.0, 0.0f, -90.0f, 0.0f, 1.0f*Speed_Max},
 // {1000.0, 0.0, 0.0f, -90.0f, 0.0f, 0.5f*Speed_Max},
 // {500.0, 0.0, 0.0f, -90.0f, 0.0f, 0.2f*Speed_Max},
@@ -248,34 +247,32 @@ TRCK_PIONTS GOTO_PATH4[5] =
 /*行使在主干道*/
 TRCK_PIONTS GOTO_PATH5[12] = 
 {
-{-15000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*Speed_Max},
 {-14000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*Speed_Max},
-{-13000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.5f*Speed_Max},
-{-12000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.8f*Speed_Max},
-{-11000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
-{-9500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
+{-13000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*Speed_Max},
+{-12000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*Speed_Max},
+{-11000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.5f*Speed_Max},
+{-9500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.8f*Speed_Max},
+{-8500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
 {-8000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
 {-6500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
-{-5000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*Speed_Max},
-{-4000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
+{-5000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*Speed_Max},
+{-4000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*Speed_Max},
 {-3600.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
 {-3100.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*Speed_Max},
 };
-TRCK_PIONTS GOTO_PATH5_UPCAR[13] = 
+TRCK_PIONTS GOTO_PATH5_UPCAR[11] = 
 {
-	{-14000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*UPCAR_Speed_Max},
 	{-13000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*UPCAR_Speed_Max},
-	{-12000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.5f*UPCAR_Speed_Max},
+	{-12000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.2f*UPCAR_Speed_Max},
+	{-11000.0, 7000.0f, 0.0f, 90.0f, 0.0f,0.5f*UPCAR_Speed_Max},
 	{-10000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.8f*UPCAR_Speed_Max},
 	{-8500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
 	{-8000.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
 	{-6500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
-	{-2500.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
-	{0.0, 7000.0, 0.0f, 90.0f, 0.0f, 1.0f*UPCAR_Speed_Max},
-	{2000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.75f*UPCAR_Speed_Max},
-	{3000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-	{3500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{4000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-5500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.75f*UPCAR_Speed_Max},
+	{-5000.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
+	{-4500.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{-4100.0, 7000.0, 0.0f, 90.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
 };
 /*返回开始点*/
 TRCK_PIONTS GOTO_PATH6[6] = 
@@ -287,14 +284,12 @@ TRCK_PIONTS GOTO_PATH6[6] =
 {0.0, 500, 0.0f, 0.0f, 0.0f, 0.2f*Speed_Max},
 {0.0f,0.0, 0.0f, 0.0f, 0.0f,0.2f*Speed_Max},
 };
-TRCK_PIONTS GOTO_PATH6_UPCAR[6] = 
+TRCK_PIONTS GOTO_PATH6_UPCAR[4] = 
 {
 	{0.0, 3000.0, 0.0f, 0.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{0.0, 2000.0, 0.0f, 0.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{0.0, 1000.0, 0.0f, 0.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-	{0.0, -1000.0, 0.0f, 0.0f, 0.0f, 0.5f*UPCAR_Speed_Max},
-	{0.0, -1500.0, 0.0f, 0.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
-	{0.0, -2000.0, 0.0f, 0.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
+	{0.0, 2000.0, 0.0f, 0.0f, 0.0f, 0.4f*UPCAR_Speed_Max},
+	{0.0, 1500.0, 0.0f, 0.0f, 0.0f, 0.4f*UPCAR_Speed_Max},
+	{0.0, 1000.0, 0.0f, 0.0f, 0.0f, 0.2f*UPCAR_Speed_Max},
 // {0.0, 700, 0.0f, 0.0f, 0.0f, 0.2f*Speed_Max},
 // {0.0f,0.0, 0.0f, 0.0f, 0.0f,0.2f*Speed_Max},
 };
@@ -1068,7 +1063,7 @@ void robot_vel::Cal_VEL(void){
 	}
 }
 
-bool WAIT = false;
+
 int detecting_oout = 0;
 /*状态机相关*/
 void Moving_FSM (void){
@@ -1088,16 +1083,10 @@ void Moving_FSM (void){
 		/*转弯方式为绕固定圆弧*/
 		case GOTO_P1:
 			if(MOVING_STATE == MOVE_ARRIVE){
-				if(WAIT){
-					ROBOT_STATE = WAITING;
-					MOVING_STATE = MOVE_STOP;
-				}else{
-					ROBOT_STATE = TURNNING_CIRA1;
-					TURN_STATE = TURNNING;
-					TURN_TYPE = TURN;
-					TURN_Orientation = LEFT;
-				}
-				
+				ROBOT_STATE = TURNNING_CIRA1;
+				TURN_STATE = TURNNING;
+				TURN_TYPE = TURN;
+				TURN_Orientation = LEFT;
 			}
 			break;
 		case TURNNING_CIRA1:
@@ -1498,7 +1487,6 @@ void Moving_FSM (void){
 							ROBOT_STATE = GOTO_P1;
 							MOVING_STATE = MOVE_GOING;
 							detecting_oout = 0;
-							WAIT = false;
 						}
 						
 					}
@@ -1546,7 +1534,7 @@ void Moving_FSM (void){
 			if(detecting_oout >= 20){
 				REAR_ASSIST_ARM_STATE = CLOSE;
 			}
-			if(detecting_oout >= 60){
+			if(detecting_oout >= 40){
 				ROBOT_STATE = WAITING;
 				MOVING_STATE = MOVE_STOP;
 				REAR_ASSIST_ARM_STATE = NOT;
@@ -1558,13 +1546,6 @@ void Moving_FSM (void){
 					PlanLeftPath(GOTO_PATH4, PATH_POINT_NUM);
 					ROBOT_STATE = GOTO_P4;
 					MOVING_STATE = MOVE_GOING;
-				}else{
-					PATH_POINT_NUM = (uint32_t)(sizeof(GOTO_PATH1) / sizeof(GOTO_PATH1[0]));
-					ROS_INFO_STREAM("the out path1 NUM:"<<PATH_POINT_NUM);
-					PlanLeftPath(GOTO_PATH1, PATH_POINT_NUM);
-					ROBOT_STATE = GOTO_P1;
-					MOVING_STATE = MOVE_GOING;
-					WAIT = true;
 				}
 			}
 		}
@@ -1617,13 +1598,13 @@ void Moving (void)
 		break;
 		case GOTO_P3:
 		{
-			if(IS_UP_CAR == UPCAR){
-				NOW_PATH = GOTO_PATH3_UPCAR;
-				PATH_POINT_NUM = (uint32_t)(sizeof(GOTO_PATH3_UPCAR) / sizeof(GOTO_PATH3_UPCAR[0]));
-			}else{
+			// if(IS_UP_CAR == UPCAR){
+			// 	NOW_PATH = GOTO_PATH3_UPCAR;
+			// 	PATH_POINT_NUM = (uint32_t)(sizeof(GOTO_PATH3_UPCAR) / sizeof(GOTO_PATH3_UPCAR[0]));
+			// }else{
 				NOW_PATH = GOTO_PATH3;
 				PATH_POINT_NUM = (uint32_t)(sizeof(GOTO_PATH3) / sizeof(GOTO_PATH3[0]));
-			}
+			// }
 		}
 		break;
 		case TURN_CIRA3:
@@ -1731,7 +1712,6 @@ void TURNNING_move(void)
 			World_VY = 0;
 			cout<<"World YAW SPEED :"<<World_VW<<endl;
 		}else if(TURN_TYPE == TURN){
-			cout<<"the angle difference is :"<<diff<<endl;
 			float turn_yaw = 0,turn_radius = 0;
 			if(diff < 0){
 				turn_yaw = -TURN_YAW;
@@ -1781,12 +1761,12 @@ void Turnning (void){
 			}break;
 			case TURNNING_CIRA4:
 			{
-				if(IS_UP_CAR){
-					expect_angle = 178.0f;
-				}else{
-					expect_angle = 2.0f;
-				}
-				
+				// if(IS_UP_CAR){
+				// 	expect_angle = 178.0f;
+				// }else{
+				// 	expect_angle = 2.0f;
+				// }
+				expect_angle = 2.0f;
 			}break;
 			case TURNNING_GOTO_CAR:
 			{
@@ -1832,7 +1812,6 @@ void AgvPositionCallback(const nav_msgs::Odometry::ConstPtr& Odo_msg)
 	EulerAngles angles;
 	float AGV_pos_X, AGV_pos_Y, AGV_pos_Z;
 	float DETLA_X,DETLA_Y = 0;
-
 	if(first_rec){
 		Last_POS_X = Odo_msg->pose.pose.position.x;
 		Last_POS_Y = Odo_msg->pose.pose.position.y;
@@ -1841,7 +1820,7 @@ void AgvPositionCallback(const nav_msgs::Odometry::ConstPtr& Odo_msg)
 		Last_POS_X = POS_X;
 		Last_POS_Y = POS_Y;
 	}
-	ROS_INFO_STREAM("The  original data of Odometry X:"<<(Odo_msg->pose.pose.position.x*1000)<<" Y:"<<(Odo_msg->pose.pose.position.y*1000));
+
 	quaternion.x = Odo_msg->pose.pose.orientation.x;
 	quaternion.y = Odo_msg->pose.pose.orientation.y;
 	quaternion.z = Odo_msg->pose.pose.orientation.z;
@@ -2225,8 +2204,7 @@ int main(int argc, char **argv)
 				/*以下测试雷达对中*/
 				// get_start = START;
 				// Is_synergy = true;
-				// ROBOT_STATE = TAKING_UP_THE_CAR;
-				// Is_PRIME_ARM_ARRIVED = true;
+				// ROBOT_STATE = DETECTING_WHEEL;
 				// CTRL_FLAG = CONTION_START_LINE;
 				// SEND_flag = SEND;
 				// IS_REC = 1;

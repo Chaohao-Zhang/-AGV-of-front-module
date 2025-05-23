@@ -86,6 +86,8 @@ void wheeltec_joy::callback(const sensor_msgs::Joy::ConstPtr& Joy) //键值回�
    }
    if(start_key > 0){
       v.angular.y = 1;
+   }else if(start_key < 0){
+      v.angular.y = -1;
    }else{
       v.angular.y = 0;
    }

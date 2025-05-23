@@ -105,7 +105,8 @@ class TCPConnector:
 
                 # 创建订阅者（只在连接成功后）
                 self.subscriber = rospy.Subscriber('synergy_vel', Twist, self.callback)
-                self.publisher = rospy.Publisher('rear_arm_touch_wheel', Bool, queue_size=1)
+                self.touch_wheel_pub = rospy.Publisher('rear_arm_touch_wheel', Bool, queue_size=1)
+                self.arm_closed_pub = rospy.Publisher('Rear_Prime_ARM_CLOSED', Bool, queue_size=1)
 
                 # 等待连接中断信号
                 self.reconnect_flag.wait()
@@ -121,33 +122,105 @@ class TCPConnector:
             if not rospy.is_shutdown():
                 rospy.sleep(RECONNECT_INTERVAL)
 
+    # def receive_thread_func(self):
+    #     """接收数据线程"""
+    #     try:
+    #         while self.connected and not rospy.is_shutdown():
+    #             try:
+    #                 data = self.sock.recv(1024)
+    #                 if not data:
+    #                     rospy.logwarn("收到空数据，连接可能已中断")
+    #                     break
+                    
+    #                 # 布尔值解析逻辑
+    #                 if len(data) >= 1:
+    #                     received_bool = data[0] != 0x00
+    #                     rospy.loginfo("收到状态: %s", received_bool)
+    #                     self.touch_wheel_pub.publish(received_bool)
+    #                 else:
+    #                     rospy.logwarn("异常数据长度: %d", len(data))
+                        
+    #             except socket.timeout:
+    #                 continue
+    #             except (ConnectionResetError, BrokenPipeError) as e:
+    #                 rospy.logwarn("连接中断: %s", str(e))
+    #                 break
+    #             except OSError as e:  # 捕获文件描述符异常
+    #                 if e.errno == 9:
+    #                     rospy.logwarn("套接字已关闭，停止接收线程")
+    #                     break
+    #     finally:
+    #         self.reconnect_flag.set()
     def receive_thread_func(self):
-        """接收数据线程"""
+        """支持消息类型标识和粘包处理的接收线程"""
+        recv_buffer = bytes()  # 新增接收缓冲区[1,6](@ref)
         try:
             while self.connected and not rospy.is_shutdown():
-                try:
+                try:         
                     data = self.sock.recv(1024)
-                    if not data:
-                        rospy.logwarn("收到空数据，连接可能已中断")
-                        break
+                    # 分批次读取并填充缓冲区
+                    recv_buffer += data  # 追加到缓冲区
                     
-                    # 布尔值解析逻辑
-                    if len(data) >= 1:
-                        received_bool = data[0] != 0x00
-                        rospy.loginfo("收到状态: %s", received_bool)
-                        self.publisher.publish(received_bool)
-                    else:
-                        rospy.logwarn("异常数据长度: %d", len(data))
+                    # 粘包处理循环（关键修改）
+                    while len(recv_buffer) >= 2:  # 确保能解析完整消息[7](@ref)
+                        # 提取并解析单个消息
+                        msg_bytes, recv_buffer = recv_buffer[:2], recv_buffer[2:]
+                        msg_type, value = struct.unpack('B?', msg_bytes)
                         
+                        # 根据消息类型分发数据[1](@ref)
+                        if msg_type == 0x01:
+                            rospy.loginfo("收到触摸轮状态: %s", value)
+                            self.touch_wheel_pub.publish(value)
+                        elif msg_type == 0x02:
+                            rospy.loginfo("收到主机械臂闭合状态: %s", value) 
+                            self.arm_closed_pub.publish(value)
+                        else:
+                            rospy.logwarn("未知消息类型: 0x%02X", msg_type)
+                            
                 except socket.timeout:
                     continue
                 except (ConnectionResetError, BrokenPipeError) as e:
                     rospy.logwarn("连接中断: %s", str(e))
                     break
-                except OSError as e:  # 捕获文件描述符异常
+                except struct.error as e:  # 新增结构体解析异常捕获[7](@ref)
+                    rospy.logerr("数据解析失败: %s", str(e))
+                    recv_buffer = bytes()  # 清空异常缓冲区
+                except OSError as e:
                     if e.errno == 9:
                         rospy.logwarn("套接字已关闭，停止接收线程")
                         break
+                        # if len(data) == 2:
+                    #     msg_type, value = struct.unpack('B?', data)
+                    #     if msg_type == 0x01:
+                    #         print(f"触摸轮状态: {value}")
+                    #     elif msg_type == 0x02:
+                    #         print(f"主机械臂闭合状态: {value}")
+                    # else:
+                    #     continue
+        #             if not data:
+        #                 rospy.logwarn("收到空数据，连接可能已中断")
+        #                 break
+        #             if len(data) != 2:
+        #                 continue
+        #             msg_type, value = struct.unpack('B?', data)
+        #             if msg_type == 0x01:
+        #                 rospy.loginfo("收到触摸轮状态: %s", value)
+        #                 self.touch_wheel_pub.publish(value)
+        #             elif msg_type == 0x02:
+        #                 rospy.loginfo("收到主机械臂闭合状态: %s", value) 
+        #                 self.arm_closed_pub.publish(value)
+        #             else:
+        #                 rospy.logwarn("未知消息类型: 0x%02X", msg_type)
+        #         except socket.timeout:
+        #             continue
+        #         except (ConnectionResetError, BrokenPipeError) as e:
+        #             rospy.logwarn("连接中断: %s", str(e))
+        #             break
+        #         except OSError as e:  # 捕获文件描述符异常
+        #             if e.errno == 9:
+        #                 rospy.logwarn("套接字已关闭，停止接收线程")
+        #                 break
+
         finally:
             self.reconnect_flag.set()
 
